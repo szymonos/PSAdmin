@@ -7,11 +7,16 @@
 
 param(
     [string]$SrvPrefix,
-    [string]$OutDir
+    [string]$OutDir = '.'
 )
 
+while ($SrvPrefix -eq '') {
+    Write-Host "Missing servers name prefix to search for.`nPlease provide prefix w/o wildcards." -ForegroundColor Cyan
+    $SrvPrefix = Read-Host
+}
+
 $outputCSV = Join-Path -Path $OutDir -ChildPath "Comps$SrvPrefix.csv"
-$nonTrustedDomains = 'domain2.com'
+$nonTrustedDomains = 'otherdomain.com'
 $credsadm = try {
     Import-CliXml -Path "$($env:USERPROFILE)\adm.cred"
 } catch {
@@ -86,3 +91,5 @@ foreach ($vm in $VMs) {
         State, IsClustered, CreationTime
 }
 $vmDomain | Select-Object -Property * | Export-Csv $outputCSV -NoTypeInformation
+Write-Host "`nResults have been saved to file:" -ForegroundColor Yellow
+Write-Output (Resolve-Path $outputCSV).Path""

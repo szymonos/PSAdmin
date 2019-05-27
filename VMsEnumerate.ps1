@@ -30,9 +30,9 @@ function Get-FQND {
         [array]$Domains = $nonTrustedDomains
     )
     try {
-        $ipAddress=([System.Net.DNS]::GetHostAddresses($compName) | Where-Object {$_.AddressFamily -eq "InterNetwork"} | Select-Object IPAddressToString)[0].IPAddressToString
-        [string]$dName = nslookup $ipAddress | Select-String -Pattern 'Name:'
-        $fqdn = New-Object PSObject -Property @{DomainName = ($dName).Substring(9, ($dName).Length - 9); IsValidated = $true}
+        $ipAddress = Resolve-DnsName $compName | Select-Object -ExpandProperty IPAddress
+        $dName = Resolve-DnsName $ipAddress | Where-Object {$_.NameHost -notlike 'vtemp*'} | Select-Object -First 1 -ExpandProperty NameHost
+        $fqdn = New-Object PSObject -Property @{DomainName = $dName; IsValidated = $true}
     } catch {
         foreach ($domain in $Domains) {
             $dName = $compName, $domain -join '.'
@@ -92,4 +92,4 @@ foreach ($vm in $VMs) {
 }
 $vmDomain | Select-Object -Property * | Export-Csv $outputCSV -NoTypeInformation
 Write-Host "`nResults have been saved to file:" -ForegroundColor Yellow
-Write-Output (Resolve-Path $outputCSV).Path""
+Write-Output (Resolve-Path $outputCSV).Path''
